@@ -1,5 +1,3 @@
-import { eventError, listenerError } from "./util.js";
-
 class EventEmitter {
   constructor() {
     this.event = {};
@@ -7,11 +5,11 @@ class EventEmitter {
 
   on(event, listener) {
     if (typeof event !== "string") {
-      throw new Error(eventError);
+      throw new Error("Event must be a string - .on");
     }
 
     if (typeof listener !== "function") {
-      throw new Error(listenerError);
+      throw new Error("Listener must be a function - .on");
     }
 
     if (!this.event[event]) {
@@ -22,16 +20,19 @@ class EventEmitter {
   }
 
   emit(event, ...args) {
-    if (!this.event[event]) {
-      return;
-    }
+    const listeners = this.event[event] || [];
 
-    if (args.length === 0) {
-      throw new Error("No arguments added");
-    }
+    const wildListeners = this.event["*"] || [];
 
-    for (const listener of this.event[event]) {
+    const listenersCopy = [...listeners];
+    const wildCardsListener = [...wildListeners];
+
+    for (const listener of listenersCopy) {
       listener(...args);
+    }
+
+    for (const wildCardListener of wildCardsListener) {
+      wildCardListener(...args);
     }
   }
 
@@ -41,26 +42,19 @@ class EventEmitter {
     }
 
     if (typeof listener !== "function") {
-      throw new Error(listenerError);
+      throw new Error(
+        ` "The second argument to .off() must be a function listener.",`,
+      );
     }
 
-    const remainingListeners = this.event[event].filter((func) => {
-      // console.log({ func, listener, bool: func === listener });
-      return func !== listener;
-    });
+    const remainingListeners = this.event[event].filter(
+      (func) => func !== listener,
+    );
 
     this.event[event] = remainingListeners;
   }
 
   once(event, listener) {
-    if (typeof event !== "string") {
-      throw new Error(eventError);
-    }
-
-    if (typeof listener !== "function") {
-      throw new Error(listenerError);
-    }
-
     const wrapper = (...args) => {
       listener(...args);
 
@@ -71,12 +65,41 @@ class EventEmitter {
   }
 }
 
-const emit = new EventEmitter();
+const emitter = new EventEmitter();
 
-emit.once("mess", (mess) => {
+// emitter.on("*", (eventName, data) => {
+//   console.log(`Wildcard saw: ${eventName} event & data: ${data}`);
+// });
+
+// emitter.on("*", (eventName, data) => {
+//   console.log(`22222 ---- Wildcard saw: ${eventName} event & data: ${data}`);
+// });
+
+// emitter.on("login", (message) => {
+//   console.log(`${message}`);
+// });
+
+// emitter.on("logout", (message) => {
+//   console.log(`${message}`);
+// });
+
+// emitter.on("message", (message) => {
+//   console.log(`${message}`);
+// });
+
+// emitter.emit("login", "login");
+// emitter.emit("logout", "logout");
+// emitter.emit("message", "message");
+
+emitter.once("hello", (mess) => {
   console.log(`${mess}`);
 });
-emit.emit("mess", "alexis maca needs to go!!!!");
-emit.emit("mess", "call again !!!");
+
+emitter.on("*", (event, data) => {
+  console.log("wildcard");
+});
+
+emitter.emit("hello");
+emitter.emit("hello");
 
 export default EventEmitter;

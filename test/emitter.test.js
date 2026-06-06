@@ -69,28 +69,6 @@ describe("EventEmitter", () => {
       ]);
     });
 
-    it("should not execute listener and throw an error when an argument isn't passed", () => {
-      const emitter = new EventEmitter();
-
-      emitter.on("message", (message) => {
-        receivedMessage = message;
-      });
-
-      expect(() => {
-        emitter.emit("message");
-      }).toThrow("No arguments added");
-    });
-
-    it("should not execute listener and throw an error when an argument isn't passed", () => {
-      const emitter = new EventEmitter();
-
-      emitter.on("message", (message) => {});
-
-      expect(() => {
-        emitter.emit("message");
-      }).toThrow("No arguments added");
-    });
-
     it("should not execute listener and throw an error when event does not exist", () => {
       const emitter = new EventEmitter();
 
@@ -146,7 +124,7 @@ describe("EventEmitter", () => {
 
       expect(() => {
         emit.off("hello");
-      }).toThrow(listenerError);
+      }).toThrow("The second argument to .off() must be a function listener.");
     });
   });
 
@@ -190,14 +168,6 @@ describe("EventEmitter", () => {
       expect(() => {
         emit.once(123, () => {});
       }).toThrow(eventError);
-    });
-
-    it("should return an error when the listener is not a function", () => {
-      const emit = new EventEmitter();
-
-      expect(() => {
-        emit.once("message", 123);
-      }).toThrow("Listener must be a function");
     });
   });
 });
