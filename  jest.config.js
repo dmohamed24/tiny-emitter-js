@@ -1,4 +1,4 @@
-// jest.config.js
 export default {
+  injectGlobals: true,
   testEnvironment: "node",
 };

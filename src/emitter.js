@@ -32,7 +32,7 @@ class EventEmitter {
     }
 
     for (const wildCardListener of wildCardsListener) {
-      wildCardListener(...args);
+      wildCardListener(event, ...args);
     }
   }
 
@@ -63,43 +63,31 @@ class EventEmitter {
 
     this.on(event, wrapper);
   }
+
+  async emitAsync(event, ...args) {
+    const listeners = this.event[event] || [];
+    const wildCardListeners = this.event["*"] || [];
+
+    const listenersCopy = [...listeners];
+    const wildCardListenersCopy = [...wildCardListeners];
+
+    for (const listener of listenersCopy) {
+      await listener(...args);
+    }
+
+    for (const wildCardListener of wildCardListenersCopy) {
+      await wildCardListener(event, ...args);
+    }
+  }
 }
 
-const emitter = new EventEmitter();
-
-// emitter.on("*", (eventName, data) => {
-//   console.log(`Wildcard saw: ${eventName} event & data: ${data}`);
-// });
-
-// emitter.on("*", (eventName, data) => {
-//   console.log(`22222 ---- Wildcard saw: ${eventName} event & data: ${data}`);
-// });
-
-// emitter.on("login", (message) => {
-//   console.log(`${message}`);
-// });
-
-// emitter.on("logout", (message) => {
-//   console.log(`${message}`);
-// });
-
-// emitter.on("message", (message) => {
-//   console.log(`${message}`);
-// });
-
-// emitter.emit("login", "login");
-// emitter.emit("logout", "logout");
-// emitter.emit("message", "message");
-
-emitter.once("hello", (mess) => {
-  console.log(`${mess}`);
-});
-
-emitter.on("*", (event, data) => {
-  console.log("wildcard");
-});
-
-emitter.emit("hello");
-emitter.emit("hello");
-
 export default EventEmitter;
+
+// note
+// parallel execution, if listener a takes 10s and listener b takes 1s do you need to wait ?
+// If You Ever Want Parallel Async Execution
+// You’d eventually evolve toward something conceptually like:
+// run all listeners simultaneously
+// wait for all to finish
+// instead of:
+// wait one-by-one

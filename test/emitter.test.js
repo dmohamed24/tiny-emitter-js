@@ -1,11 +1,17 @@
 import EventEmitter from "../src/emitter.js";
 import { eventError, listenerError } from "../src/util.js";
+import { expect, jest } from "@jest/globals";
 
 describe("EventEmitter", () => {
+  let emit;
+
+  beforeEach(() => {
+    emit = new EventEmitter();
+    emit.event = {};
+  });
+
   describe("on", () => {
     it("should store the event and listeners in a object and array", () => {
-      const emit = new EventEmitter();
-
       emit.on("message", () => {});
       emit.on("message", () => {});
       emit.on("send", () => {});
@@ -15,16 +21,12 @@ describe("EventEmitter", () => {
     });
 
     it("should return error when the event is not a string", () => {
-      const emit = new EventEmitter();
-
       expect(() => {
         emit.on(123, () => {});
       }).toThrow(eventError);
     });
 
     it("should return an error when the listener is not a function", () => {
-      const emit = new EventEmitter();
-
       expect(() => {
         emit.on("message", 123);
       }).toThrow("Listener must be a function");
@@ -33,33 +35,44 @@ describe("EventEmitter", () => {
 
   describe("emit", () => {
     it("should return values when a emit listener is called", () => {
-      const emitter = new EventEmitter();
-
       let receivedMessage = "";
 
-      emitter.on("message", (message) => {
+      emit.on("message", (message) => {
         receivedMessage = message;
       });
 
-      emitter.emit("message", "Hello World");
+      emit.emit("message", "Hello World");
 
       expect(receivedMessage).toBe("Hello World");
     });
 
-    it("should execute a listener with the multiple correct values when an event is emitted", () => {
-      const emitter = new EventEmitter();
+    it("should return values when a emit listener & wildcards listener exists", () => {
       let receivedMessage = "";
 
-      emitter.on("message", (message) => {
+      let wildCardMessage = "";
+
+      emit.on("message", (message) => {
         receivedMessage = message;
       });
 
-      emitter.emit("message", [
-        "string",
-        123,
-        { foo: "bar" },
-        ["hello", "world"],
-      ]);
+      emit.on("*", (eventName, data) => {
+        wildCardMessage = `${eventName} - ${data}`;
+      });
+
+      emit.emit("message", "Hello world");
+
+      expect(receivedMessage).toBe("Hello world");
+      expect(wildCardMessage).toBe("message - Hello world");
+    });
+
+    it("should execute a listener with the multiple correct values when an event is emitted", () => {
+      let receivedMessage = "";
+
+      emit.on("message", (message) => {
+        receivedMessage = message;
+      });
+
+      emit.emit("message", ["string", 123, { foo: "bar" }, ["hello", "world"]]);
 
       expect(receivedMessage).toEqual([
         "string",
@@ -70,18 +83,14 @@ describe("EventEmitter", () => {
     });
 
     it("should not execute listener and throw an error when event does not exist", () => {
-      const emitter = new EventEmitter();
-
       expect(() => {
-        emitter.emit("message", () => {});
+        emit.emit("message", () => {});
       }).not.toThrow();
     });
   });
 
   describe("off", () => {
     it("should remove a listener from an event", () => {
-      const emit = new EventEmitter();
-
       const func = () => {};
 
       emit.on("message", func);
@@ -94,8 +103,6 @@ describe("EventEmitter", () => {
     });
 
     it("should remove a listener from an event with multiple listeners", () => {
-      const emit = new EventEmitter();
-
       const func = () => {};
       const func2 = () => {};
 
@@ -110,16 +117,12 @@ describe("EventEmitter", () => {
     });
 
     it("should return if event does not exist", () => {
-      const emit = new EventEmitter();
-
       expect(() => {
         emit.off("hello");
       }).not.toThrow();
     });
 
     it("should throw an error when listener is not passed", () => {
-      const emit = new EventEmitter();
-
       emit.on("hello", () => {});
 
       expect(() => {
@@ -130,8 +133,6 @@ describe("EventEmitter", () => {
 
   describe("once", () => {
     it("should emit event and remove the listener", () => {
-      const emit = new EventEmitter();
-
       const func = () => {};
 
       emit.once("message", func);
@@ -163,11 +164,47 @@ describe("EventEmitter", () => {
     });
 
     it("should return error when the event is not a string", () => {
-      const emit = new EventEmitter();
-
       expect(() => {
         emit.once(123, () => {});
       }).toThrow(eventError);
+    });
+  });
+
+  describe("asyncEmit", () => {
+    it("should execute all standard listeners with arguments", async () => {
+      const mockListener1 = jest.fn().mockResolvedValue("res1");
+      const mockListener2 = jest.fn().mockResolvedValue("res2");
+
+      emit.event["message"] = [mockListener1, mockListener2];
+
+      await emit.emitAsync("message", "Hello World");
+
+      expect(mockListener1).toHaveBeenCalledWith("Hello World");
+      expect(mockListener2).toHaveBeenCalledWith("Hello World");
+    });
+
+    it("should execute any wildcard listeners with arguments", async () => {
+      const mockListener1 = jest.fn().mockResolvedValue("");
+      const wildCardMockListener1 = jest.fn().mockResolvedValue("");
+
+      emit.event["*"] = [wildCardMockListener1];
+      emit.event["message"] = [mockListener1];
+
+      await emit.emitAsync("message", "Hello World");
+
+      expect(wildCardMockListener1).toHaveBeenCalledWith(
+        "message",
+        "Hello World",
+      );
+    });
+
+    it("should not execute listener and throw an error", async () => {
+      const mockListener1 = jest.fn().mockResolvedValue("ok");
+      const mockListener2 = jest.fn().mockRejectedValue(new Error("Timeout"));
+
+      emit.event["message"] = [mockListener1, mockListener2];
+
+      await expect(emit.emitAsync("message")).rejects.toThrow("Timeout");
     });
   });
 });

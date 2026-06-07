@@ -738,3 +738,139 @@ Then:
 That final step teaches real-world library engineering.
 
 ---
+
+Stretch Goals (Excellent Next Steps)
+
+These are PERFECT next-level improvements.
+
+1. Listener Count
+
+Add:
+
+listenerCount(event)
+
+Example:
+
+emitter.listenerCount("message");
+
+Returns:
+
+2
+
+Teaches:
+
+querying internal state
+utility API design 2. .listeners(event)
+
+Return all listeners for inspection.
+
+Example:
+
+emitter.listeners("message");
+
+Teaches:
+
+exposing internal state safely
+defensive copying 3. .removeAllListeners(event?)
+
+Example:
+
+emitter.removeAllListeners("message");
+
+or:
+
+emitter.removeAllListeners();
+
+Teaches:
+
+optional parameters
+bulk cleanup
+API branching 4. Event Namespaces
+
+Example:
+
+"user:create"
+"user:update"
+"user:\*"
+
+Now wildcard matching becomes pattern-based.
+
+VERY interesting architecture challenge.
+
+Teaches:
+
+string parsing
+matching systems
+scalable event architecture 5. Listener Priorities
+
+Example:
+
+emitter.on("message", fn, { priority: 10 });
+
+Higher priorities execute first.
+
+Teaches:
+
+sorting
+execution scheduling
+metadata-driven systems 6. Parallel Async Execution
+
+Current:
+
+sequential
+
+Stretch:
+
+parallel execution
+
+Teaches:
+
+Promise orchestration
+concurrency semantics 7. Error Boundary Events
+
+Instead of throwing:
+
+emit internal "error" event
+
+Like Node.js does.
+
+Example:
+
+emitter.on("error", (err) => {});
+
+Teaches:
+
+internal event systems
+error propagation design 8. Max Listener Warning
+
+Like Node.js:
+
+Possible memory leak detected
+
+when too many listeners exist.
+
+Teaches:
+
+memory-awareness
+runtime safeguards 9. WeakRef / Auto Cleanup
+
+VERY advanced.
+
+Listeners automatically disappear if objects are garbage collected.
+
+Teaches:
+
+memory management
+WeakRef
+GC concepts 10. Middleware / Interceptors
+
+Example:
+
+beforeEmit()
+afterEmit()
+
+Teaches:
+
+execution pipelines
+interception systems
+plugin architecture
